@@ -3,12 +3,30 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libopenhgi", "libopenhgi\libopenhgi.csproj", "{87CB3D85-4363-41A6-AB1B-FA941820A87E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "databusBroadcaster", "databusBroadcaster\databusBroadcaster.csproj", "{64BDFD50-945F-4D93-A64A-68157C59E9D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mockDataBus", "mockDataBus\mockDataBus.csproj", "{1C68958C-A2EB-408E-A2CF-FDE05AB0461D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "openhgiclient", "openhgiclient\openhgiclient.csproj", "{491B9E0E-FED5-45A4-B939-AF86C4DB7E8C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1C68958C-A2EB-408E-A2CF-FDE05AB0461D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C68958C-A2EB-408E-A2CF-FDE05AB0461D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C68958C-A2EB-408E-A2CF-FDE05AB0461D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C68958C-A2EB-408E-A2CF-FDE05AB0461D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{491B9E0E-FED5-45A4-B939-AF86C4DB7E8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{491B9E0E-FED5-45A4-B939-AF86C4DB7E8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{491B9E0E-FED5-45A4-B939-AF86C4DB7E8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{491B9E0E-FED5-45A4-B939-AF86C4DB7E8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64BDFD50-945F-4D93-A64A-68157C59E9D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64BDFD50-945F-4D93-A64A-68157C59E9D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64BDFD50-945F-4D93-A64A-68157C59E9D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64BDFD50-945F-4D93-A64A-68157C59E9D5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{87CB3D85-4363-41A6-AB1B-FA941820A87E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{87CB3D85-4363-41A6-AB1B-FA941820A87E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{87CB3D85-4363-41A6-AB1B-FA941820A87E}.Release|Any CPU.ActiveCfg = Release|Any CPU
