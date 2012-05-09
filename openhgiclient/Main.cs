@@ -13,7 +13,7 @@ namespace openhgiclient
 			string configxml = @"../../config/data.xml";
 			configxml = Path.GetFullPath(configxml);
 			
-			Openhgi openhgi = new Openhgi();
+			Openhgi openhgi = new Openhgi(configxml);
 		}
 	}
 }
