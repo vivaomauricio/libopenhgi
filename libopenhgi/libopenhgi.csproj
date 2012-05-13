@@ -42,6 +42,13 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Openhgi.cs" />
+    <Compile Include="HCIEvents.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\Logger\Logger.csproj">
+      <Project>{8F50C9FB-4041-4718-BE6D-0ED85EE5838F}</Project>
+      <Name>Logger</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

@@ -2,8 +2,8 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.Workbench ActiveDocument="libopenhgi/Openhgi.cs">
     <Files>
-      <File FileName="openhgiclient/Main.cs" Line="16" Column="43" />
-      <File FileName="libopenhgi/Openhgi.cs" Line="53" Column="4" />
+      <File FileName="openhgiclient/Main.cs" Line="28" Column="51" />
+      <File FileName="libopenhgi/Openhgi.cs" Line="63" Column="7" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

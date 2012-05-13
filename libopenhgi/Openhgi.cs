@@ -4,12 +4,28 @@ using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
 using OpenNI;
+using Logger;
 
 
 namespace libopenhgi
 {
+
+	
+	public delegate void MessageEventHandler(object sender, MessageEventArgs e);
+	
+	
+	
+	
 	public class Openhgi
 	{
+		
+		private Logger.Log log;
+		
+		
+		public event MessageEventHandler MessageEvent;
+		
+		
+		
 		
 		private string configxml;
 		private OpenNI.Context context;
@@ -30,21 +46,26 @@ namespace libopenhgi
 		private bool shouldRun;
 		
 		
-		
 		public Openhgi (string configxml)
 		{
 			try
 			{
+				this.log = Logger.Log.getInstance(@"../../../log");
+				
 				this.configxml = configxml;
+				this.log.INFO("libopenhgi", "loading config:" + this.configxml);
+				
 				this.context = Context.CreateFromXmlFile(this.configxml, out this.scriptNode);
 				this.depth = this.context.FindExistingNode(NodeType.Depth) as DepthGenerator;
 				this.depthMetaData = new DepthMetaData();
 				
 				if (this.depth == null)
-				{
-					throw new Exception(@"Error in "
+				{		
+					string info = @"Error in "
 					                    + Path.GetFullPath(this.configxml)
-					                    + ". No depth node found.");
+					                    + ". No depth node found.";
+					
+					throw new Exception(info);
 				}
 				
 				this.userGenerator = new UserGenerator(this.context);
@@ -62,7 +83,9 @@ namespace libopenhgi
 			}
 			catch (Exception e)
 			{
+				
 				Console.WriteLine(e);
+				this.log.ERROR("libopenhgi", e.ToString());
 				this.shouldRun = false;
 			}
 		}
@@ -82,6 +105,16 @@ namespace libopenhgi
 				}
 			}
 		}
+		
+		
+		protected virtual void OnMessageEvent(MessageEventArgs e)
+		{
+			if (MessageEvent != null)
+			{
+				MessageEvent(this, e);
+			} else log.DEBUG("libopenhgi","MessageEvent is null");
+		}
+		
 	}
 }
 
