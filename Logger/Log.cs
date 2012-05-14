@@ -115,6 +115,12 @@ namespace Logger
 			write (str);
 		}
 		
+		public void OffTheRecord(string module, string str)
+		{
+			str = "[>][" + module + "] " + str;
+			Console.WriteLine(str);
+		}
+		
 		public void CloseTextWriter()
 		{
 			if (this.textWriter != null)

@@ -14,7 +14,10 @@ namespace libopenhgi
 	public delegate void MessageEventHandler(object sender, MessageEventArgs e);
 	public delegate void NewHGIUserHandler(object sender, HGIUserEventArgs e);
 	public delegate void LostHGIUserHandler(object sender, HGIUserEventArgs e);
-	
+	public delegate void LookingForPoseHandler(object sender, HGIUserEventArgs e);
+	public delegate void CalibratingHGIUserHandler(object sender, HGIUserEventArgs e);
+	public delegate void UserIsSteadyHandler(object sender, HGIUserEventArgs e);
+	public delegate void UserIsNotSteadyHandler(object sender, HGIUserEventArgs e);
 	
 	public class Openhgi
 	{
@@ -24,6 +27,11 @@ namespace libopenhgi
 		public event MessageEventHandler MessageEvent;
 		public event NewHGIUserHandler NewHGIUserEvent;
 		public event LostHGIUserHandler LostHGIUserEvent;
+		public event LookingForPoseHandler LookingForPoseEvent;
+		public event CalibratingHGIUserHandler CalibratingHGIUserEvent;
+		public event UserIsSteadyHandler UserIsSteadyEvent;
+		public event UserIsNotSteadyHandler UserIsNotSteadyEvent;
+		
 		
 		private string configxml;
 		private OpenNI.Context context;
@@ -92,6 +100,20 @@ namespace libopenhgi
 				this.xRes = this.depth.MapOutputMode.XRes;
 				this.yRes = this.depth.MapOutputMode.YRes;
 				
+				this.sessionManager = new SessionManager(this.context, "Wave", "RaiseHand");
+				this.steadyDetector = new SteadyDetector();
+				this.steadyDetector.DetectionDuration = 200;
+				
+				this.sessionManager.SessionStart += 
+					new EventHandler<PositionEventArgs>(sessionManager_sessionStart);
+				this.sessionManager.SessionEnd +=
+					new EventHandler(sessionManager_sessionEnd);
+				this.steadyDetector.Steady += 
+					new EventHandler<SteadyEventArgs>(steadyDetector_steady);
+				this.steadyDetector.NotSteady += 
+					new EventHandler<SteadyEventArgs>(steadyDetector_notSteady);
+				
+				this.sessionManager.AddListener(this.steadyDetector);
 				
 				this.shouldRun = true;
 				this.readThread = new Thread(readerThread);
@@ -166,12 +188,12 @@ namespace libopenhgi
 		
 		void steadyDetector_steady(object sender, SteadyEventArgs e)
 		{
-			
+			OnUserIsSteady(new HGIUserEventArgs(e.ID));
 		}
 		
 		void steadyDetector_notSteady(object sender, SteadyEventArgs e)
 		{
-			
+			OnUserIsNotSteady(new HGIUserEventArgs(e.ID));
 		}
 		
 		private unsafe void readerThread()
@@ -180,12 +202,31 @@ namespace libopenhgi
 			{
 				try
 				{
-					
+					this.context.WaitAndUpdateAll();
+					this.sessionManager.Update(this.context);
+					this.depthMetaData = this.depth.GetMetaData();
 				}
 				catch (Exception e)
 				{
 					Console.WriteLine(e);
 					this.shouldRun = false;
+				}
+				
+				int[] users = this.userGenerator.GetUsers();
+				foreach (int user in users)
+				{
+					if (this.skeletonCapability.IsTracking(user))
+					{
+						
+					} 
+					else if (this.skeletonCapability.IsCalibrating(user))
+					{
+						OnLookingForPoseEvent(new HGIUserEventArgs(user));
+					} 
+					else
+					{
+						OnLookingForPoseEvent(new HGIUserEventArgs(user));
+					}	
 				}
 			}
 		}
@@ -197,7 +238,7 @@ namespace libopenhgi
 			{
 				log.DEBUG("EVENT", "raised Message");
 				MessageEvent(this, e);
-			} else log.DEBUG("libopenhgi","MessageEvent is null");
+			}
 		}
 		
 		protected virtual void OnNewHGIUserEvent(HGIUserEventArgs e)
@@ -206,7 +247,7 @@ namespace libopenhgi
 			{
 				log.DEBUG("EVENT", "new user");
 				NewHGIUserEvent(this, e);
-			} else log.DEBUG("libopenhgi","NewHGIUserEvent is null");
+			}
 		}
 		
 		protected virtual void OnLostHGIUserEvent(HGIUserEventArgs e)
@@ -215,9 +256,44 @@ namespace libopenhgi
 			{
 				log.DEBUG("EVENT", "lost user");
 				LostHGIUserEvent(this, e);
-			} else log.DEBUG("libopenhgi","LostHGIUserEvent is null");
+			}
 		}
 		
+		protected virtual void OnLookingForPoseEvent(HGIUserEventArgs e)
+		{
+			if (LookingForPoseEvent != null)
+			{
+				log.OffTheRecord("EVENT", "user:" + e.ID + " - Looking for pose");
+				LookingForPoseEvent(this, e);
+			}
+		}
+		
+		protected virtual void OnCalibratingHGIUserEvent(HGIUserEventArgs e)
+		{
+			if (LookingForPoseEvent != null)
+			{
+				log.OffTheRecord("EVENT", "user:" + e.ID + " - Calibrating");
+				LookingForPoseEvent(this, e);
+			}
+		}
+		
+		protected virtual void OnUserIsSteady(HGIUserEventArgs e)
+		{
+			if (UserIsSteadyEvent != null)
+			{
+				log.DEBUG("EVENT", "user:" + e.ID + " - is steady");
+				UserIsSteadyEvent(this, e);
+			}
+		}
+		
+		protected virtual void OnUserIsNotSteady(HGIUserEventArgs e)
+		{
+			if (UserIsNotSteadyEvent != null)
+			{
+				log.DEBUG("EVENT", "user:" + e.ID + " - is not steady");
+				UserIsNotSteadyEvent(this, e);
+			}
+		}
 	}
 }
 

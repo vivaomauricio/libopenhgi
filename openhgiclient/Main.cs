@@ -21,6 +21,8 @@ namespace openhgiclient
 			this.openhgi.MessageEvent += new MessageEventHandler(this.printMessage);
 			this.openhgi.NewHGIUserEvent += new NewHGIUserHandler(this.newUser);
 			this.openhgi.LostHGIUserEvent += new LostHGIUserHandler(this.lostUser);
+			this.openhgi.LookingForPoseEvent += new LookingForPoseHandler(this.lookingForPose);
+			this.openhgi.CalibratingHGIUserEvent += new CalibratingHGIUserHandler(this.calibratingUser);
 			
 			this.openhgi.initTracking();
 		}
@@ -47,6 +49,16 @@ namespace openhgiclient
 		}
 		
 		private void userIsNotSteady(object sender, HGIUserEventArgs e)
+		{
+			
+		}
+		
+		private void lookingForPose(object sender, HGIUserEventArgs e)
+		{
+			
+		}
+		
+		private void calibratingUser(object sender, HGIUserEventArgs e)
 		{
 			
 		}
