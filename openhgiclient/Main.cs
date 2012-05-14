@@ -17,16 +17,38 @@ namespace openhgiclient
 		
 		public void start()
 		{
-			this.openhgi = new Openhgi(configxml);
-			
+			this.openhgi = new Openhgi(configxml);		
 			this.openhgi.MessageEvent += new MessageEventHandler(this.printMessage);
+			this.openhgi.NewHGIUserEvent += new NewHGIUserHandler(this.newUser);
+			this.openhgi.LostHGIUserEvent += new LostHGIUserHandler(this.lostUser);
+			
+			this.openhgi.initTracking();
 		}
 		
 		
 		private void printMessage(object sender, MessageEventArgs e)
-		{
-			Console.WriteLine("yyyyyyyyyyyyyyyyyyyyyyyyyyyy");
+		{	
 			Console.WriteLine(e.message);
+		}
+		
+		private void newUser(object sender, HGIUserEventArgs e)
+		{
+			int userID = e.ID;
+		}
+		
+		private void lostUser(object sender, HGIUserEventArgs e)
+		{
+			int userID = e.ID;
+		}
+		
+		private void userIsSteady(object sender, HGIUserEventArgs e)
+		{
+			
+		}
+		
+		private void userIsNotSteady(object sender, HGIUserEventArgs e)
+		{
+			
 		}
 		
 		public static void Main (string[] args)

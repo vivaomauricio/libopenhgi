@@ -67,30 +67,45 @@ namespace Logger
 				this.level = Level.INFO;
 		}
 		
+		private void writeFile(string str)
+		{
+			this.i += 1;
+			str = "[" + this.i + "]" + str;
+			this.textWriter.WriteLine(str);
+			this.textWriter.Flush();
+		}
+		
 		private void write(string str)
 		{
 			this.i += 1;
 			str = "[" + this.i + "]" + str;
 			Console.WriteLine(str);
-			this.textWriter.WriteLine(str);
-			this.textWriter.Flush();
+			writeFile(str);
 		}
 		
 		public void DEBUG(string module, string str)
 		{
+			str = "[DEBUG][" + module + "] " + str;
 			if (this.level == Level.DEBUG)
 			{
-				str = "[DEBUG][" + module + "] " + str;
 				write(str);
+			}
+			else
+			{
+				writeFile(str);	
 			}
 		}
 		
 		public void INFO(string module, string str)
 		{
+			str = "[INFO][" + module + "] " + str;
 			if (this.level == Level.INFO || this.level == Level.DEBUG)
-			{
-				str = "[INFO][" + module + "] " + str;
+			{	
 				write(str);
+			}
+			else
+			{
+				writeFile(str);
 			}
 		}
 		

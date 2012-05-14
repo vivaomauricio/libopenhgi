@@ -13,6 +13,15 @@ namespace libopenhgi
 		}
 	}
 	
+	public class HGIUserEventArgs : EventArgs
+	{
+		public int ID;
+		
+		public HGIUserEventArgs(int ID)
+		{
+			this.ID = ID;
+		}
+	}
 	
 	
 	
