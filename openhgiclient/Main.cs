@@ -10,6 +10,11 @@ namespace openhgiclient
 		private string configxml;
 		public Openhgi openhgi;
 		
+		private int leftHand;
+		private int rightHand;
+		
+		
+		
 		public OpenhgiClient(string xml)
 		{
 			this.configxml = Path.GetFullPath(xml);
@@ -23,6 +28,14 @@ namespace openhgiclient
 			this.openhgi.LostHGIUserEvent += new LostHGIUserHandler(this.lostUser);
 			this.openhgi.LookingForPoseEvent += new LookingForPoseHandler(this.lookingForPose);
 			this.openhgi.CalibratingHGIUserEvent += new CalibratingHGIUserHandler(this.calibratingUser);
+			this.openhgi.LeftHandPointUpdatedEvent += 
+				new LeftHandPointUpdatedHandler(this.leftHandUpdated);
+			this.openhgi.RightHandPointUpdatedEvent += 
+				new RightHandPointUpdatedHandler(this.rightHandUpdated);
+			
+			this.leftHand = 0;
+			this.rightHand = 0;
+			
 			
 			this.openhgi.initTracking();
 		}
@@ -35,12 +48,12 @@ namespace openhgiclient
 		
 		private void newUser(object sender, HGIUserEventArgs e)
 		{
-			int userID = e.ID;
+			int user = e.user;
 		}
 		
 		private void lostUser(object sender, HGIUserEventArgs e)
 		{
-			int userID = e.ID;
+			int user = e.user;
 		}
 		
 		private void userIsSteady(object sender, HGIUserEventArgs e)
@@ -59,6 +72,16 @@ namespace openhgiclient
 		}
 		
 		private void calibratingUser(object sender, HGIUserEventArgs e)
+		{
+			
+		}
+		
+		private void leftHandUpdated(object sender, HandPointEventArgs e)
+		{
+			
+		}
+		
+		private void rightHandUpdated(object sender, HandPointEventArgs e)
 		{
 			
 		}

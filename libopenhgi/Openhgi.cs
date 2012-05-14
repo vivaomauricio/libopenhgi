@@ -18,6 +18,8 @@ namespace libopenhgi
 	public delegate void CalibratingHGIUserHandler(object sender, HGIUserEventArgs e);
 	public delegate void UserIsSteadyHandler(object sender, HGIUserEventArgs e);
 	public delegate void UserIsNotSteadyHandler(object sender, HGIUserEventArgs e);
+	public delegate void LeftHandPointUpdatedHandler(object sender, HandPointEventArgs e);
+	public delegate void RightHandPointUpdatedHandler(object sender, HandPointEventArgs e);
 	
 	public class Openhgi
 	{
@@ -31,7 +33,8 @@ namespace libopenhgi
 		public event CalibratingHGIUserHandler CalibratingHGIUserEvent;
 		public event UserIsSteadyHandler UserIsSteadyEvent;
 		public event UserIsNotSteadyHandler UserIsNotSteadyEvent;
-		
+		public event LeftHandPointUpdatedHandler LeftHandPointUpdatedEvent;
+		public event RightHandPointUpdatedHandler RightHandPointUpdatedEvent;
 		
 		private string configxml;
 		private OpenNI.Context context;
@@ -51,6 +54,13 @@ namespace libopenhgi
 		
 		
 		public int xRes, yRes;
+		
+		private Point3D leftHand;
+		private Point3D rightHand;
+		
+		private Point3D leftElbow;
+		private Point3D rightElbow;
+		
 		
 		private Thread readThread;
 		private bool shouldRun;
@@ -100,6 +110,7 @@ namespace libopenhgi
 				this.xRes = this.depth.MapOutputMode.XRes;
 				this.yRes = this.depth.MapOutputMode.YRes;
 				
+				
 				this.sessionManager = new SessionManager(this.context, "Wave", "RaiseHand");
 				this.steadyDetector = new SteadyDetector();
 				this.steadyDetector.DetectionDuration = 200;
@@ -124,8 +135,7 @@ namespace libopenhgi
 				OnMessageEvent(new MessageEventArgs("ITS ALIVE"));
 				this.log.ERROR("libopenhgi", e.ToString());
 				this.shouldRun = false;
-			}
-			
+			}		
 		}
 		
 		void userGenerator_newUser(object sender, NewUserEventArgs e)
@@ -178,17 +188,28 @@ namespace libopenhgi
 		
 		void sessionManager_sessionStart(object sender, PositionEventArgs e)
 		{
+			this.log.DEBUG("NITE", "session started");
 			
 		}
 		
 		void sessionManager_sessionEnd(object sender, EventArgs e)
 		{
-			
+			this.log.DEBUG("NITE", "session ended");
 		}
 		
 		void steadyDetector_steady(object sender, SteadyEventArgs e)
 		{
 			OnUserIsSteady(new HGIUserEventArgs(e.ID));
+			
+			
+			Console.WriteLine("<<<<<<<STEADY");
+			if (this.leftHand.Y > this.leftElbow.Y
+			    && this.rightHand.Y > this.rightElbow.Y)
+			{
+				Console.WriteLine(">" + this.leftHand + "<       >" + this.rightHand + "<");	
+			}
+			
+			
 		}
 		
 		void steadyDetector_notSteady(object sender, SteadyEventArgs e)
@@ -217,6 +238,13 @@ namespace libopenhgi
 				{
 					if (this.skeletonCapability.IsTracking(user))
 					{
+						getJoints(user);
+						
+						this.leftHand = updatePoint(joints[user][SkeletonJoint.LeftHand].Position);
+						this.rightHand = updatePoint(joints[user][SkeletonJoint.RightHand].Position);
+						
+						this.leftElbow = updatePoint(joints[user][SkeletonJoint.LeftElbow].Position);
+						this.rightElbow = updatePoint(joints[user][SkeletonJoint.RightElbow].Position);
 						
 					} 
 					else if (this.skeletonCapability.IsCalibrating(user))
@@ -263,7 +291,7 @@ namespace libopenhgi
 		{
 			if (LookingForPoseEvent != null)
 			{
-				log.OffTheRecord("EVENT", "user:" + e.ID + " - Looking for pose");
+				log.OffTheRecord("EVENT", "user:" + e.user + " - Looking for pose");
 				LookingForPoseEvent(this, e);
 			}
 		}
@@ -272,7 +300,7 @@ namespace libopenhgi
 		{
 			if (LookingForPoseEvent != null)
 			{
-				log.OffTheRecord("EVENT", "user:" + e.ID + " - Calibrating");
+				log.OffTheRecord("EVENT", "user:" + e.user + " - Calibrating");
 				LookingForPoseEvent(this, e);
 			}
 		}
@@ -281,7 +309,7 @@ namespace libopenhgi
 		{
 			if (UserIsSteadyEvent != null)
 			{
-				log.DEBUG("EVENT", "user:" + e.ID + " - is steady");
+				log.DEBUG("EVENT", "user:" + e.user + " - is steady");
 				UserIsSteadyEvent(this, e);
 			}
 		}
@@ -290,9 +318,69 @@ namespace libopenhgi
 		{
 			if (UserIsNotSteadyEvent != null)
 			{
-				log.DEBUG("EVENT", "user:" + e.ID + " - is not steady");
+				log.DEBUG("EVENT", "user:" + e.user + " - is not steady");
 				UserIsNotSteadyEvent(this, e);
 			}
+		}
+		
+		protected virtual void OnLeftHandPointUpdatedEvent(HandPointEventArgs e)
+		{
+			if (LeftHandPointUpdatedEvent != null)
+			{
+				LeftHandPointUpdatedEvent(this, e);
+			}
+		}
+		
+		protected virtual void OnRightHandPointUpdatedEvent(HandPointEventArgs e)
+		{
+			if (RightHandPointUpdatedEvent != null)
+			{
+				RightHandPointUpdatedEvent(this, e);
+			}
+		}
+		
+		private void getJoint(int user, SkeletonJoint joint)
+		{
+			SkeletonJointPosition pos = this.skeletonCapability.GetSkeletonJointPosition(user, joint);
+			if (pos.Position.Z == 0)
+			{
+				pos.Confidence = 0;
+			}
+			else
+			{
+				pos.Position = this.depth.ConvertRealWorldToProjective(pos.Position);
+			}
+			this.joints[user][joint] = pos;
+		}
+		
+		private void getJoints(int user)
+		{	
+			getJoint(user, SkeletonJoint.Head);
+			getJoint(user, SkeletonJoint.Neck);
+			
+			getJoint(user, SkeletonJoint.LeftShoulder);
+			getJoint(user, SkeletonJoint.LeftElbow);
+			getJoint(user, SkeletonJoint.LeftHand);
+			
+			getJoint(user, SkeletonJoint.RightShoulder);
+			getJoint(user, SkeletonJoint.RightElbow);
+			getJoint(user, SkeletonJoint.RightHand);
+			
+			getJoint(user, SkeletonJoint.Torso);
+			
+			getJoint(user, SkeletonJoint.LeftHip);
+            getJoint(user, SkeletonJoint.LeftKnee);
+            getJoint(user, SkeletonJoint.LeftFoot);
+
+            getJoint(user, SkeletonJoint.RightHip);
+            getJoint(user, SkeletonJoint.RightKnee);
+            getJoint(user, SkeletonJoint.RightFoot);
+		}
+		
+		private Point3D updatePoint(Point3D p)
+		{
+			p.Y = -p.Y;
+			return this.depth.ConvertRealWorldToProjective(p);
 		}
 	}
 }

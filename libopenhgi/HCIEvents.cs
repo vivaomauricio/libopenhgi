@@ -1,4 +1,5 @@
 using System;
+using OpenNI;
 
 namespace libopenhgi
 {
@@ -15,15 +16,29 @@ namespace libopenhgi
 	
 	public class HGIUserEventArgs : EventArgs
 	{
-		public int ID;
+		public int user;
 		
-		public HGIUserEventArgs(int ID)
+		public HGIUserEventArgs(int user)
 		{
-			this.ID = ID;
+			this.user = user;
 		}
 	}
 	
-	
+	public class HandPointEventArgs : EventArgs
+	{
+		public int user;
+		public int X;
+		public int Y;
+		public int Z;
+		
+		public HandPointEventArgs(int user, int X, int Y, int Z)
+		{
+			this.user = user;
+			this.X = X;
+			this.Y = Y;
+			this.Z = Z;
+		}
+	}
 	
 }
 
