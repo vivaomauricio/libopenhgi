@@ -134,6 +134,11 @@ namespace Logger
 			this.textWriter.WriteLine("\n\n#\n#\n#\n#  " + DateTime.Now + "\n");
 			this.textWriter.Flush();
 		}
+		
+		public void printPoint(string label, int x, int y, int z)
+		{
+			Console.Out.WriteLine(label + ":\t\t\t\tx= " + x + "  y= " + y + "  z= " + z);
+		}
 	}
 }
 

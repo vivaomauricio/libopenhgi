@@ -220,9 +220,11 @@ namespace libopenhgi
 			
 			Console.WriteLine("<<<<<<<STEADY");
 			
-			Console.WriteLine("LHand   x=" + this.leftHand.X + "   y=" + this.leftHand.Y + "  z=" + this.leftHand.Z);
-			Console.WriteLine("LElbow   x=" + this.leftElbow.X + "   y=" + this.leftElbow.Y + "  z=" + this.leftElbow.Z);
-			
+			if ((this.leftHand.Y > this.leftElbow.Y) && (this.rightHand.Y > this.rightElbow.Y))
+			{
+				log.printPoint("LHand", (int) this.leftHand.X, (int) this.leftHand.Y, (int) this.leftHand.Z);
+				log.printPoint("LElbow", (int) this.leftElbow.X, (int) this.leftElbow.Y, (int) this.leftElbow.Z);
+			}
 			
 			
 		}
@@ -268,7 +270,8 @@ namespace libopenhgi
 					} 
 					else if (this.skeletonCapability.IsCalibrating(user))
 					{
-						//OnLookingForPoseEvent(new HGIUserEventArgs(user));
+						
+						OnLookingForPoseEvent(new HGIUserEventArgs(user));
 					} 
 					else
 					{
@@ -398,7 +401,7 @@ namespace libopenhgi
 		
 		private Point3D updatePoint(Point3D p)
 		{
-			p.Y = -p.Y;
+			//p.Y = -p.Y;
 			return this.depth.ConvertRealWorldToProjective(p);
 		}
 	}
