@@ -52,8 +52,9 @@ namespace libopenhgi
 		private HandsGenerator handsGenerator;
 		private SteadyDetector steadyDetector;
 		
-		
 		public int xRes, yRes;
+		
+		private int NiteUser;
 		
 		private Point3D leftHand;
 		private Point3D rightHand;
@@ -129,6 +130,8 @@ namespace libopenhgi
 				
 				this.sessionManager.AddListener(this.steadyDetector);
 				
+				this.NiteUser = 1;
+				
 				this.shouldRun = true;
 				this.readThread = new Thread(readerThread);
 				this.readThread.Start();
@@ -163,7 +166,6 @@ namespace libopenhgi
 		
 		void skeletonCapability_calibrationComplete(object sender, CalibrationProgressEventArgs e)
 		{
-			this.log.DEBUG("libopenhgi", "calibration complete");
 			if (e.Status == CalibrationStatus.OK) 
 			{
 				this.skeletonCapability.StartTracking(e.ID);
@@ -184,17 +186,13 @@ namespace libopenhgi
 		
 		void poseDetectionCapability_poseDetected(object sender, PoseDetectedEventArgs e)
 		{
-			this.log.DEBUG("libopenhgi", "pose detected");
 			this.poseDetectionCapability.StopPoseDetection(e.ID);
 			this.skeletonCapability.RequestCalibration(e.ID, true);
 		}
 		
 		void sessionManager_sessionStart(object sender, PositionEventArgs e)
 		{
-			
-			
-			this.log.DEBUG("NITE", "session started");
-			
+			this.log.DEBUG("NITE", "session started");	
 		}
 		
 		void sessionManager_sessionEnd(object sender, EventArgs e)
@@ -207,7 +205,11 @@ namespace libopenhgi
 			
 			if (!this.skeletonCapability.IsTracking(e.ID))
 				this.log.DEBUG("STEADY", "skeletonCapability is not tracking the user " + e.ID);
-				
+			else
+			{
+				this.log.DEBUG("Tracker", "user: " + e.ID);
+				this.NiteUser = e.ID;
+			}
 			
 			this.leftHand = updatePoint(joints[e.ID][SkeletonJoint.LeftHand].Position);
 			this.rightHand = updatePoint(joints[e.ID][SkeletonJoint.RightHand].Position);
@@ -230,6 +232,7 @@ namespace libopenhgi
 		void steadyDetector_notSteady(object sender, SteadyEventArgs e)
 		{
 			Console.WriteLine("<<<<<<<MOVING");
+			this.NiteUser = e.ID;
 			OnUserIsNotSteady(new HGIUserEventArgs(e.ID));
 		}
 		
@@ -257,6 +260,13 @@ namespace libopenhgi
 						
 						getJoints(user);
 						
+						if (user == this.NiteUser)
+						{
+							this.leftHand = updatePoint(joints[user][SkeletonJoint.LeftHand].Position);
+							this.rightHand = updatePoint(joints[user][SkeletonJoint.RightHand].Position);
+							this.leftElbow = updatePoint(joints[user][SkeletonJoint.LeftElbow].Position);
+							this.rightElbow = updatePoint(joints[user][SkeletonJoint.RightElbow].Position);
+						}
 					} 
 					else if (this.skeletonCapability.IsCalibrating(user))
 					{

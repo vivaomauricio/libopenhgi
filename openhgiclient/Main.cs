@@ -31,12 +31,12 @@ namespace openhgiclient
 		
 		private void newUser(object sender, HGIUserEventArgs e)
 		{
-			int user = e.user;
+		
 		}
 		
 		private void lostUser(object sender, HGIUserEventArgs e)
 		{
-			int user = e.user;
+		
 		}
 		
 		private void userIsSteady(object sender, HGIUserEventArgs e)
