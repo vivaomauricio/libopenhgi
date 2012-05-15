@@ -219,12 +219,10 @@ namespace libopenhgi
 			
 			
 			Console.WriteLine("<<<<<<<STEADY");
-			if (this.leftHand.Y > this.leftElbow.Y
-			    && this.rightHand.Y > this.rightElbow.Y)
-			{
-				this.log.DEBUG("STEADY", "\t\t\tLH: " + (int) leftHand.X + " " + (int) leftHand.Y
-			               + "\tRL: " + (int) rightHand.X + " " + (int) rightHand.Y);	
-			}
+			
+			Console.WriteLine("LHand   x=" + this.leftHand.X + "   y=" + this.leftHand.Y + "  z=" + this.leftHand.Z);
+			Console.WriteLine("LElbow   x=" + this.leftElbow.X + "   y=" + this.leftElbow.Y + "  z=" + this.leftElbow.Z);
+			
 			
 			
 		}
