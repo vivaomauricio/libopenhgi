@@ -8,12 +8,7 @@ namespace openhgiclient
 	class OpenhgiClient
 	{
 		private string configxml;
-		public Openhgi openhgi;
-		
-		private int leftHand;
-		private int rightHand;
-		
-		
+		public Openhgi openhgi;	
 		
 		public OpenhgiClient(string xml)
 		{
@@ -22,22 +17,10 @@ namespace openhgiclient
 		
 		public void start()
 		{
-			this.openhgi = new Openhgi(configxml);		
-			this.openhgi.MessageEvent += new MessageEventHandler(this.printMessage);
-			this.openhgi.NewHGIUserEvent += new NewHGIUserHandler(this.newUser);
-			this.openhgi.LostHGIUserEvent += new LostHGIUserHandler(this.lostUser);
-			this.openhgi.LookingForPoseEvent += new LookingForPoseHandler(this.lookingForPose);
-			this.openhgi.CalibratingHGIUserEvent += new CalibratingHGIUserHandler(this.calibratingUser);
-			this.openhgi.LeftHandPointUpdatedEvent += 
-				new LeftHandPointUpdatedHandler(this.leftHandUpdated);
-			this.openhgi.RightHandPointUpdatedEvent += 
-				new RightHandPointUpdatedHandler(this.rightHandUpdated);
-			
-			this.leftHand = 0;
-			this.rightHand = 0;
-			
-			
+			this.openhgi = new Openhgi(configxml);
 			this.openhgi.initTracking();
+			Console.Out.WriteLine("'Wave' to start session");
+
 		}
 		
 		

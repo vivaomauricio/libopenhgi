@@ -43,7 +43,6 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Openhgi.cs" />
     <Compile Include="HCIEvents.cs" />
-    <Compile Include="JointConverter.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

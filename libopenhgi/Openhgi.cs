@@ -77,9 +77,12 @@ namespace libopenhgi
 			try
 			{
 				this.log.INFO("libopenhgi", "loading config:" + this.configxml);
+				this.log.setLevelDebug(true);
 				
 				this.context = Context.CreateFromXmlFile(this.configxml, out this.scriptNode);
 				this.depth = this.context.FindExistingNode(NodeType.Depth) as DepthGenerator;
+				this.handsGenerator = this.context.FindExistingNode(NodeType.Hands) as HandsGenerator;
+				this.handsGenerator.SetSmoothing(0.1f);
 				this.depthMetaData = new DepthMetaData();
 				
 				if (this.depth == null)
@@ -188,6 +191,8 @@ namespace libopenhgi
 		
 		void sessionManager_sessionStart(object sender, PositionEventArgs e)
 		{
+			
+			
 			this.log.DEBUG("NITE", "session started");
 			
 		}
@@ -199,14 +204,24 @@ namespace libopenhgi
 		
 		void steadyDetector_steady(object sender, SteadyEventArgs e)
 		{
-			OnUserIsSteady(new HGIUserEventArgs(e.ID));
+			
+			if (!this.skeletonCapability.IsTracking(e.ID))
+				this.log.DEBUG("STEADY", "skeletonCapability is not tracking the user " + e.ID);
+				
+			
+			this.leftHand = updatePoint(joints[e.ID][SkeletonJoint.LeftHand].Position);
+			this.rightHand = updatePoint(joints[e.ID][SkeletonJoint.RightHand].Position);
+						
+			this.leftElbow = updatePoint(joints[e.ID][SkeletonJoint.LeftElbow].Position);
+			this.rightElbow = updatePoint(joints[e.ID][SkeletonJoint.RightElbow].Position);
 			
 			
 			Console.WriteLine("<<<<<<<STEADY");
 			if (this.leftHand.Y > this.leftElbow.Y
 			    && this.rightHand.Y > this.rightElbow.Y)
 			{
-				Console.WriteLine(">" + this.leftHand + "<       >" + this.rightHand + "<");	
+				this.log.DEBUG("STEADY", "\t\t\tLH: " + (int) leftHand.X + " " + (int) leftHand.Y
+			               + "\tRL: " + (int) rightHand.X + " " + (int) rightHand.Y);	
 			}
 			
 			
@@ -214,6 +229,7 @@ namespace libopenhgi
 		
 		void steadyDetector_notSteady(object sender, SteadyEventArgs e)
 		{
+			Console.WriteLine("<<<<<<<MOVING");
 			OnUserIsNotSteady(new HGIUserEventArgs(e.ID));
 		}
 		
@@ -237,23 +253,18 @@ namespace libopenhgi
 				foreach (int user in users)
 				{
 					if (this.skeletonCapability.IsTracking(user))
-					{
+					{	
+						
 						getJoints(user);
-						
-						this.leftHand = updatePoint(joints[user][SkeletonJoint.LeftHand].Position);
-						this.rightHand = updatePoint(joints[user][SkeletonJoint.RightHand].Position);
-						
-						this.leftElbow = updatePoint(joints[user][SkeletonJoint.LeftElbow].Position);
-						this.rightElbow = updatePoint(joints[user][SkeletonJoint.RightElbow].Position);
 						
 					} 
 					else if (this.skeletonCapability.IsCalibrating(user))
 					{
-						OnLookingForPoseEvent(new HGIUserEventArgs(user));
+						//OnLookingForPoseEvent(new HGIUserEventArgs(user));
 					} 
 					else
 					{
-						OnLookingForPoseEvent(new HGIUserEventArgs(user));
+						//OnLookingForPoseEvent(new HGIUserEventArgs(user));
 					}	
 				}
 			}
