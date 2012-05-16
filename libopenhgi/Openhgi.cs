@@ -21,6 +21,8 @@ namespace libopenhgi
 	public delegate void LeftHandPointUpdatedHandler(object sender, HandPointEventArgs e);
 	public delegate void RightHandPointUpdatedHandler(object sender, HandPointEventArgs e);
 	
+	public delegate void NavigationGestureEventHandler(object sender, NavigationGestureEventArgs e);
+	
 	public class Openhgi
 	{
 		
@@ -35,6 +37,7 @@ namespace libopenhgi
 		public event UserIsNotSteadyHandler UserIsNotSteadyEvent;
 		public event LeftHandPointUpdatedHandler LeftHandPointUpdatedEvent;
 		public event RightHandPointUpdatedHandler RightHandPointUpdatedEvent;
+		public event NavigationGestureEventHandler NavigationGestureEvent;
 		
 		private string configxml;
 		private OpenNI.Context context;
@@ -54,13 +57,17 @@ namespace libopenhgi
 		
 		public int xRes, yRes;
 		
+		private enum State {STEADY, MOVING, NONE};
+		private State state;
+		
 		private int NiteUser;
+		private MovementSpace movementSpace;
 		
 		private Point3D leftHand;
 		private Point3D rightHand;
 		
-		private Point3D leftElbow;
-		private Point3D rightElbow;
+		private Point3D leftHip;
+		private Point3D rightHip;
 		
 		
 		private Thread readThread;
@@ -123,13 +130,18 @@ namespace libopenhgi
 					new EventHandler<PositionEventArgs>(sessionManager_sessionStart);
 				this.sessionManager.SessionEnd +=
 					new EventHandler(sessionManager_sessionEnd);
+				this.sessionManager.SessionFocusProgress +=
+					new EventHandler<SessionProgressEventArgs>(sessionManager_sessionFocusProgress);
+				
+				
 				this.steadyDetector.Steady += 
 					new EventHandler<SteadyEventArgs>(steadyDetector_steady);
 				this.steadyDetector.NotSteady += 
-					new EventHandler<SteadyEventArgs>(steadyDetector_notSteady);
+					new EventHandler<SteadyEventArgs>(steadyDetector_moving);
 				
 				this.sessionManager.AddListener(this.steadyDetector);
 				
+				this.state = State.NONE;
 				this.NiteUser = 1;
 				
 				this.shouldRun = true;
@@ -166,10 +178,14 @@ namespace libopenhgi
 		
 		void skeletonCapability_calibrationComplete(object sender, CalibrationProgressEventArgs e)
 		{
+			
 			if (e.Status == CalibrationStatus.OK) 
 			{
 				this.skeletonCapability.StartTracking(e.ID);
 				this.joints.Add(e.ID, new Dictionary<SkeletonJoint, SkeletonJointPosition>());
+				
+				Console.Out.WriteLine("calibration OK --> user: " + e.ID);
+				
 			}
 			else if (e.Status != CalibrationStatus.ManualAbort)
 			{
@@ -200,8 +216,15 @@ namespace libopenhgi
 			this.log.DEBUG("NITE", "session ended");
 		}
 		
+		void sessionManager_sessionFocusProgress(object sender, SessionProgressEventArgs e)
+		{
+			
+		}
+		
 		void steadyDetector_steady(object sender, SteadyEventArgs e)
 		{
+			
+			this.state = State.STEADY;
 			
 			if (!this.skeletonCapability.IsTracking(e.ID))
 				this.log.DEBUG("STEADY", "skeletonCapability is not tracking the user " + e.ID);
@@ -209,31 +232,35 @@ namespace libopenhgi
 			{
 				this.log.DEBUG("Tracker", "user: " + e.ID);
 				this.NiteUser = e.ID;
+			
+			
+				this.leftHand = updatePoint(joints[e.ID][SkeletonJoint.LeftHand].Position);
+				this.rightHand = updatePoint(joints[e.ID][SkeletonJoint.RightHand].Position);
+							
+				this.leftHip = updatePoint(joints[e.ID][SkeletonJoint.LeftElbow].Position);
+				this.rightHip = updatePoint(joints[e.ID][SkeletonJoint.RightElbow].Position);
+				
+				
+				Console.WriteLine("<<<<<<<STEADY");
+				
+				if ((this.leftHand.Y > this.leftHip.Y) && (this.rightHand.Y > this.rightHip.Y))
+				{
+					this.movementSpace = new MovementSpace(this.leftHand, this.rightHand);
+				} 
+				else
+				{
+					this.movementSpace = null;
+				}
+			
 			}
-			
-			this.leftHand = updatePoint(joints[e.ID][SkeletonJoint.LeftHand].Position);
-			this.rightHand = updatePoint(joints[e.ID][SkeletonJoint.RightHand].Position);
-						
-			this.leftElbow = updatePoint(joints[e.ID][SkeletonJoint.LeftElbow].Position);
-			this.rightElbow = updatePoint(joints[e.ID][SkeletonJoint.RightElbow].Position);
-			
-			
-			Console.WriteLine("<<<<<<<STEADY");
-			
-			if ((this.leftHand.Y > this.leftElbow.Y) && (this.rightHand.Y > this.rightElbow.Y))
-			{
-				log.printPoint("LHand", (int) this.leftHand.X, (int) this.leftHand.Y, (int) this.leftHand.Z);
-				log.printPoint("LElbow", (int) this.leftElbow.X, (int) this.leftElbow.Y, (int) this.leftElbow.Z);
-			}
-			
-			
 		}
 		
-		void steadyDetector_notSteady(object sender, SteadyEventArgs e)
+		void steadyDetector_moving(object sender, SteadyEventArgs e)
 		{
 			Console.WriteLine("<<<<<<<MOVING");
 			this.NiteUser = e.ID;
-			OnUserIsNotSteady(new HGIUserEventArgs(e.ID));
+			
+			this.state = State.MOVING;
 		}
 		
 		private unsafe void readerThread()
@@ -245,6 +272,7 @@ namespace libopenhgi
 					this.context.WaitAndUpdateAll();
 					this.sessionManager.Update(this.context);
 					this.depthMetaData = this.depth.GetMetaData();
+					
 				}
 				catch (Exception e)
 				{
@@ -257,26 +285,28 @@ namespace libopenhgi
 				{
 					if (this.skeletonCapability.IsTracking(user))
 					{	
-						
 						getJoints(user);
 						
-						if (user == this.NiteUser)
-						{
-							this.leftHand = updatePoint(joints[user][SkeletonJoint.LeftHand].Position);
-							this.rightHand = updatePoint(joints[user][SkeletonJoint.RightHand].Position);
-							this.leftElbow = updatePoint(joints[user][SkeletonJoint.LeftElbow].Position);
-							this.rightElbow = updatePoint(joints[user][SkeletonJoint.RightElbow].Position);
-						}
+						this.leftHand = updatePoint(joints[user][SkeletonJoint.LeftHand].Position);
+						this.rightHand = updatePoint(joints[user][SkeletonJoint.RightHand].Position);
+						this.leftHip = updatePoint(joints[user][SkeletonJoint.LeftHip].Position);
+						this.rightHip = updatePoint(joints[user][SkeletonJoint.RightHip].Position);
+					
 					} 
 					else if (this.skeletonCapability.IsCalibrating(user))
 					{
-						
 						OnLookingForPoseEvent(new HGIUserEventArgs(user));
 					} 
 					else
 					{
-						//OnLookingForPoseEvent(new HGIUserEventArgs(user));
+						OnLookingForPoseEvent(new HGIUserEventArgs(user));
 					}	
+				}
+				
+				if (this.state == State.MOVING && this.movementSpace != null)
+				{
+					MovementSpaceCoordinate c = this.movementSpace.calcCoordinate(this.leftHand, this.rightHand);
+					OnNavigationGestureEvent(new NavigationGestureEventArgs(c));
 				}
 			}
 		}
@@ -358,6 +388,14 @@ namespace libopenhgi
 			if (RightHandPointUpdatedEvent != null)
 			{
 				RightHandPointUpdatedEvent(this, e);
+			}
+		}
+		
+		protected virtual void OnNavigationGestureEvent(NavigationGestureEventArgs e)
+		{
+			if (NavigationGestureEvent != null)
+			{
+				NavigationGestureEvent(this, e);
 			}
 		}
 		

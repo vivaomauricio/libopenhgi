@@ -18,7 +18,13 @@ namespace openhgiclient
 		public void start()
 		{
 			this.openhgi = new Openhgi(configxml);
+			
+			this.openhgi.NavigationGestureEvent += 
+				new NavigationGestureEventHandler(this.navigationGesture);
+			
+			
 			this.openhgi.initTracking();
+			
 			Console.Out.WriteLine("'Wave' to start session");
 
 		}
@@ -29,45 +35,13 @@ namespace openhgiclient
 			Console.WriteLine(e.message);
 		}
 		
-		private void newUser(object sender, HGIUserEventArgs e)
+		private void navigationGesture(object sender, NavigationGestureEventArgs e)
 		{
-		
-		}
-		
-		private void lostUser(object sender, HGIUserEventArgs e)
-		{
-		
-		}
-		
-		private void userIsSteady(object sender, HGIUserEventArgs e)
-		{
+			Console.Out.Write(".");	
 			
 		}
 		
-		private void userIsNotSteady(object sender, HGIUserEventArgs e)
-		{
-			
-		}
 		
-		private void lookingForPose(object sender, HGIUserEventArgs e)
-		{
-			
-		}
-		
-		private void calibratingUser(object sender, HGIUserEventArgs e)
-		{
-			
-		}
-		
-		private void leftHandUpdated(object sender, HandPointEventArgs e)
-		{
-			
-		}
-		
-		private void rightHandUpdated(object sender, HandPointEventArgs e)
-		{
-			
-		}
 		
 		public static void Main (string[] args)
 		{

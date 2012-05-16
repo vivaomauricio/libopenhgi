@@ -1,4 +1,5 @@
 using System;
+using OpenNI;
 
 namespace libopenhgi
 {
@@ -18,7 +19,15 @@ namespace libopenhgi
 	
 	public class MovementSpace
 	{
-		public MovementSpaceCoordinate calcCoordinate(int LHand, int RHand)
+		
+		
+		public MovementSpace(Point3D LHand, Point3D RHand)
+		{
+			Logger.Log.getInstance().printPoint("left hand", (int) LHand.X, (int) LHand.Y, (int) LHand.Z);
+			Logger.Log.getInstance().printPoint("right hand", (int) RHand.X, (int) RHand.Y, (int) RHand.Z);
+		}
+		
+		public MovementSpaceCoordinate calcCoordinate(Point3D LHand, Point3D RHand)
 		{
 			
 			

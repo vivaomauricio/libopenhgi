@@ -40,5 +40,15 @@ namespace libopenhgi
 		}
 	}
 	
+	public class NavigationGestureEventArgs : EventArgs
+	{
+		public MovementSpaceCoordinate coordinate;
+		
+		public NavigationGestureEventArgs(MovementSpaceCoordinate coordinate)
+		{
+			this.coordinate = coordinate;
+		}
+	}
+	
 }
 
