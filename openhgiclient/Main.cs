@@ -21,11 +21,10 @@ namespace openhgiclient
 			
 			this.openhgi.NavigationGestureEvent += 
 				new NavigationGestureEventHandler(this.navigationGesture);
+			this.openhgi.MessageEvent += new MessageEventHandler(this.printMessage);
 			
 			
 			this.openhgi.initTracking();
-			
-			Console.Out.WriteLine("'Wave' to start session");
 
 		}
 		
@@ -37,7 +36,24 @@ namespace openhgiclient
 		
 		private void navigationGesture(object sender, NavigationGestureEventArgs e)
 		{
-			Console.Out.Write(".");	
+			Console.Out.Write(".");
+			
+			if (e.coordinate.plane == MovementSpacePlane.BACKWARD)
+			{
+				Console.WriteLine("Plane: Backward");
+			}
+			else if (e.coordinate.plane == MovementSpacePlane.POV)
+			{
+				Console.WriteLine("Plane: POV");
+			}
+			else if (e.coordinate.plane == MovementSpacePlane.FORWARD)
+			{
+				Console.WriteLine("Plane: Forward");
+			}
+			else 
+			{
+				Console.Out.WriteLine("No plane at all");
+			}
 			
 		}
 		

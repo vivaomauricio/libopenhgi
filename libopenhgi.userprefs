@@ -1,11 +1,12 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Logger/Log.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="libopenhgi/Openhgi.cs">
     <Files>
-      <File FileName="openhgiclient/Main.cs" Line="39" Column="3" />
-      <File FileName="libopenhgi/Openhgi.cs" Line="226" Column="33" />
-      <File FileName="Logger/Log.cs" Line="84" Column="4" />
-      <File FileName="libopenhgi/MovementSpace.cs" Line="1" Column="1" />
+      <File FileName="openhgiclient/Main.cs" Line="55" Column="43" />
+      <File FileName="libopenhgi/Openhgi.cs" Line="320" Column="3" />
+      <File FileName="libopenhgi/MovementSpace.cs" Line="77" Column="26" />
+      <File FileName="libopenhgi/HCIEvents.cs" Line="49" Column="8" />
+      <File FileName="Logger/Log.cs" Line="81" Column="20" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

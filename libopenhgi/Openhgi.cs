@@ -98,7 +98,6 @@ namespace libopenhgi
 					string info = @"Error in "
 					                    + Path.GetFullPath(this.configxml)
 					                    + ". No depth node found.";
-					
 					throw new Exception(info);
 				}
 				
@@ -150,8 +149,8 @@ namespace libopenhgi
 			}
 			catch (Exception e)
 			{
-				OnMessageEvent(new MessageEventArgs("ITS ALIVE"));
-				this.log.ERROR("libopenhgi", e.ToString());
+				this.log.ERROR("libopenhgi", e.Message);
+				OnMessageEvent(new MessageEventArgs(e.Message));
 				this.shouldRun = false;
 			}		
 		}
@@ -176,6 +175,7 @@ namespace libopenhgi
 			this.joints.Remove(e.ID);
 		}
 		
+		private bool anyCalib = false;
 		void skeletonCapability_calibrationComplete(object sender, CalibrationProgressEventArgs e)
 		{
 			
@@ -184,8 +184,13 @@ namespace libopenhgi
 				this.skeletonCapability.StartTracking(e.ID);
 				this.joints.Add(e.ID, new Dictionary<SkeletonJoint, SkeletonJointPosition>());
 				
-				Console.Out.WriteLine("calibration OK --> user: " + e.ID);
+				this.log.DEBUG("TRACKER", "calibration OK --> user: " + e.ID);
+				this.NiteUser = e.ID;
 				
+				if (!anyCalib)
+				{
+					OnMessageEvent(new MessageEventArgs("'Wave' to start session"));
+				}
 			}
 			else if (e.Status != CalibrationStatus.ManualAbort)
 			{
@@ -303,7 +308,9 @@ namespace libopenhgi
 					}	
 				}
 				
-				if (this.state == State.MOVING && this.movementSpace != null)
+				bool gesturePose = (this.leftHand.Y > this.leftHip.Y) && (this.rightHand.Y > this.rightHip.Y);
+				
+				if (this.state == State.MOVING && this.movementSpace != null && gesturePose)
 				{
 					MovementSpaceCoordinate c = this.movementSpace.calcCoordinate(this.leftHand, this.rightHand);
 					OnNavigationGestureEvent(new NavigationGestureEventArgs(c));

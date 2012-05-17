@@ -75,17 +75,21 @@ namespace Logger
 			this.textWriter.Flush();
 		}
 		
+		public void toFile(string module, string str)
+		{
+			str = " [DEBUG] [" + module + "] " + str;
+			writeFile(str);	
+		}
+		
 		private void write(string str)
 		{
-			this.i += 1;
-			str = "[" + this.i + "]" + str;
 			Console.WriteLine(str);
 			writeFile(str);
 		}
 		
 		public void DEBUG(string module, string str)
 		{
-			str = "[DEBUG][" + module + "] " + str;
+			str = " [DEBUG] [" + module + "] " + str;
 			if (this.level == Level.DEBUG)
 			{
 				write(str);
@@ -98,7 +102,7 @@ namespace Logger
 		
 		public void INFO(string module, string str)
 		{
-			str = "[INFO][" + module + "] " + str;
+			str = " [INFO] [" + module + "] " + str;
 			if (this.level == Level.INFO || this.level == Level.DEBUG)
 			{	
 				write(str);
@@ -111,7 +115,7 @@ namespace Logger
 		
 		public void ERROR(string module, string str)
 		{
-			str = "[ERROR][" + module + "] " + str;
+			str = " >[ERROR]< [" + module + "] " + str;
 			write (str);
 		}
 		
