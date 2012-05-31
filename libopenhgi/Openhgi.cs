@@ -18,13 +18,16 @@ namespace libopenhgi
 	public delegate void CalibratingHGIUserHandler(object sender, HGIUserEventArgs e);
 	public delegate void UserIsSteadyHandler(object sender, HGIUserEventArgs e);
 	public delegate void UserIsNotSteadyHandler(object sender, HGIUserEventArgs e);
-	public delegate void LeftHandPointUpdatedHandler(object sender, HandPointEventArgs e);
-	public delegate void RightHandPointUpdatedHandler(object sender, HandPointEventArgs e);
 	
 	
 	public delegate void NavigationSessionStartHandler(object sender, HGIUserEventArgs e);
 	public delegate void NavigationSessionEndHandler(object sender, HGIUserEventArgs e);
 	public delegate void NavigationGestureEventHandler(object sender, NavigationGestureEventArgs e);
+	
+	public delegate void PointingCoordinatesHandler(object sender, HandPointEventArgs e);
+	
+	
+	
 	
 	public class Openhgi
 	{
@@ -38,11 +41,12 @@ namespace libopenhgi
 		public event CalibratingHGIUserHandler CalibratingHGIUserEvent;
 		public event UserIsSteadyHandler UserIsSteadyEvent;
 		public event UserIsNotSteadyHandler UserIsNotSteadyEvent;
-		public event LeftHandPointUpdatedHandler LeftHandPointUpdatedEvent;
-		public event RightHandPointUpdatedHandler RightHandPointUpdatedEvent;
+		
 		public event NavigationGestureEventHandler NavigationGestureEvent;
 		public event NavigationSessionStartHandler NavigationSessionStartEvent;
 		public event NavigationSessionEndHandler NavigationSessionEndEvent;
+		
+		public event PointingCoordinatesHandler PointingCoordinatesEvent;
 		
 		private string configxml;
 		private OpenNI.Context context;
@@ -223,14 +227,17 @@ namespace libopenhgi
 			this.skeletonCapability.RequestCalibration(e.ID, true);
 		}
 		
+		Boolean niteSession = false;
 		void sessionManager_sessionStart(object sender, PositionEventArgs e)
 		{
-			this.log.DEBUG("NITE", "session started");	
+			this.log.DEBUG("NITE", "session started");
+			this.niteSession = true;
 		}
 		
 		void sessionManager_sessionEnd(object sender, EventArgs e)
 		{
 			this.log.DEBUG("NITE", "session ended");
+			this.niteSession = false;
 		}
 		
 		void sessionManager_sessionFocusProgress(object sender, SessionProgressEventArgs e)
@@ -261,9 +268,7 @@ namespace libopenhgi
 			
 			this.state = State.STEADY;
 			
-			
-			log.DEBUG("STEADY", "\t\t\t <> " + this.gestureSessionState);
-			
+			log.DEBUG("STEADY", "\t\t\t <> " + this.gestureSessionState);		
 			
 			if (this.gestureSessionState == GestureSessionState.NAVIGATION)
 			{
@@ -272,15 +277,13 @@ namespace libopenhgi
 					this.movementSpace = new MovementSpace(this.leftHand, this.rightHand);
 					OnNavigationSessionStartEvent(new HGIUserEventArgs(1));
 				}
-				
-				
-				this.lastGestureSessionState = GestureSessionState.NAVIGATION;
+				this.lastGestureSessionState = GestureSessionState.NAVIGATION;			
 			} 
 			else if (this.gestureSessionState == GestureSessionState.POINTING)
 			{
-				
 				this.movementSpace = null;
 				this.lastGestureSessionState = GestureSessionState.POINTING;
+				
 			}
 			else {
 				
@@ -292,10 +295,7 @@ namespace libopenhgi
 		void steadyDetector_moving(object sender, SteadyEventArgs e)
 		{
 			this.state = State.MOVING;
-			log.DEBUG("MOVING","\t\t\t <> " + this.gestureSessionState);
-			
-		
-			
+			log.DEBUG("MOVING","\t\t\t <> " + this.gestureSessionState);	
 		}
 		
 		private unsafe void readerThread()
@@ -342,35 +342,40 @@ namespace libopenhgi
 					}	
 				}
 				
-				this.updateGestureSessionState();
-				if (this.gestureSessionState == GestureSessionState.NAVIGATION)
+				if (this.niteSession)
 				{
-					if (this.movementSpace != null)
+					this.updateGestureSessionState();
+					if (this.gestureSessionState == GestureSessionState.NAVIGATION)
 					{
-						MovementSpaceCoordinate c;
-						c = this.movementSpace.calcCoordinate(this.leftHand, this.rightHand);
-					
-						if (c == null)
+						if (this.movementSpace != null)
 						{
-							this.movementSpace = null;
-							OnNavigationSessionEndEvent(new HGIUserEventArgs(1));
+							MovementSpaceCoordinate c;
+							c = this.movementSpace.calcCoordinate(this.leftHand, this.rightHand);
+						
+							if (c == null)
+							{
+								this.movementSpace = null;
+								OnNavigationSessionEndEvent(new HGIUserEventArgs(1));
+							}
+							else
+							{
+								OnNavigationGestureEvent(new NavigationGestureEventArgs(c));
+							}
 						}
-						else
-						{
-							OnNavigationGestureEvent(new NavigationGestureEventArgs(c));
-						}
+						
+					}
+					else if (this.gestureSessionState == GestureSessionState.POINTING)
+					{
+						OnPointingCoordinatesEvent(new HandPointEventArgs(1, (int) this.rightHand.X, (int) this.rightHand.Y, (int) this.rightHand.Z));
 					}
 					
+					
+					if (this.leftHand.X > this.rightHip.X
+					    && this.rightHand.X < this.leftHip.X)
+					{
+						Environment.Exit(0);
+					}
 				}
-				else if (this.gestureSessionState == GestureSessionState.POINTING)
-				{
-					//Console.WriteLine("Pointing");
-				} 
-				else
-				{
-					//Console.WriteLine("Gesture None");
-				}
-				
 			}
 		}
 		
@@ -438,22 +443,6 @@ namespace libopenhgi
 			}
 		}
 		
-		protected virtual void OnLeftHandPointUpdatedEvent(HandPointEventArgs e)
-		{
-			if (LeftHandPointUpdatedEvent != null)
-			{
-				LeftHandPointUpdatedEvent(this, e);
-			}
-		}
-		
-		protected virtual void OnRightHandPointUpdatedEvent(HandPointEventArgs e)
-		{
-			if (RightHandPointUpdatedEvent != null)
-			{
-				RightHandPointUpdatedEvent(this, e);
-			}
-		}
-		
 		protected virtual void OnNavigationGestureEvent(NavigationGestureEventArgs e)
 		{
 			if (NavigationGestureEvent != null)
@@ -467,6 +456,7 @@ namespace libopenhgi
 			if (NavigationSessionStartEvent != null)
 			{
 				NavigationSessionStartEvent(this, e);
+				log.toFile("NAVIGATION", "Session Started");
 			}
 		}
 		
@@ -475,6 +465,15 @@ namespace libopenhgi
 			if (NavigationSessionEndEvent != null)
 			{
 				NavigationSessionEndEvent(this, e);
+				log.toFile("NAVIGATION", "Session Ended");
+			}
+		}
+		
+		protected virtual void OnPointingCoordinatesEvent(HandPointEventArgs e)
+		{
+			if (PointingCoordinatesEvent != null)
+			{
+				PointingCoordinatesEvent(this, e);
 			}
 		}
 		
