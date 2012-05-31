@@ -21,6 +21,9 @@ namespace libopenhgi
 	public delegate void LeftHandPointUpdatedHandler(object sender, HandPointEventArgs e);
 	public delegate void RightHandPointUpdatedHandler(object sender, HandPointEventArgs e);
 	
+	
+	public delegate void NavigationSessionStartHandler(object sender, HGIUserEventArgs e);
+	public delegate void NavigationSessionEndHandler(object sender, HGIUserEventArgs e);
 	public delegate void NavigationGestureEventHandler(object sender, NavigationGestureEventArgs e);
 	
 	public class Openhgi
@@ -38,6 +41,8 @@ namespace libopenhgi
 		public event LeftHandPointUpdatedHandler LeftHandPointUpdatedEvent;
 		public event RightHandPointUpdatedHandler RightHandPointUpdatedEvent;
 		public event NavigationGestureEventHandler NavigationGestureEvent;
+		public event NavigationSessionStartHandler NavigationSessionStartEvent;
+		public event NavigationSessionEndHandler NavigationSessionEndEvent;
 		
 		private string configxml;
 		private OpenNI.Context context;
@@ -60,8 +65,13 @@ namespace libopenhgi
 		private enum State {STEADY, MOVING, NONE};
 		private State state;
 		
+		public enum GestureSessionState {NAVIGATION, POINTING, NONE}
+		public GestureSessionState gestureSessionState;
+		public GestureSessionState lastGestureSessionState;
+		
 		private int NiteUser;
 		private MovementSpace movementSpace;
+		
 		
 		private Point3D leftHand;
 		private Point3D rightHand;
@@ -141,6 +151,8 @@ namespace libopenhgi
 				this.sessionManager.AddListener(this.steadyDetector);
 				
 				this.state = State.NONE;
+				this.gestureSessionState = GestureSessionState.NONE;
+				this.lastGestureSessionState = GestureSessionState.NONE;
 				this.NiteUser = 1;
 				
 				this.shouldRun = true;
@@ -226,46 +238,64 @@ namespace libopenhgi
 			
 		}
 		
+		void updateGestureSessionState()
+		{
+			
+			
+			if (this.leftHand.Y > this.leftHip.Y && this.rightHand.Y > this.leftHip.Y)
+			{
+				this.gestureSessionState = GestureSessionState.NAVIGATION;
+			}
+			else if (this.leftHand.Y < this.leftHip.Y && this.rightHand.Y > this.leftHip.Y)
+			{
+				this.gestureSessionState = GestureSessionState.POINTING;
+			}
+			else
+			{
+				this.gestureSessionState = GestureSessionState.NONE;
+			}
+		}
+		
 		void steadyDetector_steady(object sender, SteadyEventArgs e)
 		{
 			
 			this.state = State.STEADY;
 			
-			if (!this.skeletonCapability.IsTracking(e.ID))
-				this.log.DEBUG("STEADY", "skeletonCapability is not tracking the user " + e.ID);
-			else
+			
+			log.DEBUG("STEADY", "\t\t\t <> " + this.gestureSessionState);
+			
+			
+			if (this.gestureSessionState == GestureSessionState.NAVIGATION)
 			{
-				this.log.DEBUG("Tracker", "user: " + e.ID);
-				this.NiteUser = e.ID;
-			
-			
-				this.leftHand = updatePoint(joints[e.ID][SkeletonJoint.LeftHand].Position);
-				this.rightHand = updatePoint(joints[e.ID][SkeletonJoint.RightHand].Position);
-							
-				this.leftHip = updatePoint(joints[e.ID][SkeletonJoint.LeftElbow].Position);
-				this.rightHip = updatePoint(joints[e.ID][SkeletonJoint.RightElbow].Position);
-				
-				
-				Console.WriteLine("<<<<<<<STEADY");
-				
-				if ((this.leftHand.Y > this.leftHip.Y) && (this.rightHand.Y > this.rightHip.Y))
+				if (this.movementSpace == null)
 				{
 					this.movementSpace = new MovementSpace(this.leftHand, this.rightHand);
-				} 
-				else
-				{
-					this.movementSpace = null;
+					OnNavigationSessionStartEvent(new HGIUserEventArgs(1));
 				}
-			
+				
+				
+				this.lastGestureSessionState = GestureSessionState.NAVIGATION;
+			} 
+			else if (this.gestureSessionState == GestureSessionState.POINTING)
+			{
+				
+				this.movementSpace = null;
+				this.lastGestureSessionState = GestureSessionState.POINTING;
+			}
+			else {
+				
+				this.lastGestureSessionState = GestureSessionState.NONE;
+				this.movementSpace = null;
 			}
 		}
 		
 		void steadyDetector_moving(object sender, SteadyEventArgs e)
 		{
-			Console.WriteLine("<<<<<<<MOVING");
-			this.NiteUser = e.ID;
-			
 			this.state = State.MOVING;
+			log.DEBUG("MOVING","\t\t\t <> " + this.gestureSessionState);
+			
+		
+			
 		}
 		
 		private unsafe void readerThread()
@@ -286,16 +316,20 @@ namespace libopenhgi
 				}
 				
 				int[] users = this.userGenerator.GetUsers();
+				
 				foreach (int user in users)
 				{
 					if (this.skeletonCapability.IsTracking(user))
 					{	
+						
+						this.NiteUser = user;
+						
 						getJoints(user);
 						
-						this.leftHand = updatePoint(joints[user][SkeletonJoint.LeftHand].Position);
-						this.rightHand = updatePoint(joints[user][SkeletonJoint.RightHand].Position);
-						this.leftHip = updatePoint(joints[user][SkeletonJoint.LeftHip].Position);
-						this.rightHip = updatePoint(joints[user][SkeletonJoint.RightHip].Position);
+						this.leftHand = updatePoint(joints[1][SkeletonJoint.LeftHand].Position);
+						this.rightHand = updatePoint(joints[1][SkeletonJoint.RightHand].Position);
+						this.leftHip = updatePoint(joints[1][SkeletonJoint.LeftHip].Position);
+						this.rightHip = updatePoint(joints[1][SkeletonJoint.RightHip].Position);
 					
 					} 
 					else if (this.skeletonCapability.IsCalibrating(user))
@@ -308,13 +342,35 @@ namespace libopenhgi
 					}	
 				}
 				
-				bool gesturePose = (this.leftHand.Y > this.leftHip.Y) && (this.rightHand.Y > this.rightHip.Y);
-				
-				if (this.state == State.MOVING && this.movementSpace != null && gesturePose)
+				this.updateGestureSessionState();
+				if (this.gestureSessionState == GestureSessionState.NAVIGATION)
 				{
-					MovementSpaceCoordinate c = this.movementSpace.calcCoordinate(this.leftHand, this.rightHand);
-					OnNavigationGestureEvent(new NavigationGestureEventArgs(c));
+					if (this.movementSpace != null)
+					{
+						MovementSpaceCoordinate c;
+						c = this.movementSpace.calcCoordinate(this.leftHand, this.rightHand);
+					
+						if (c == null)
+						{
+							this.movementSpace = null;
+							OnNavigationSessionEndEvent(new HGIUserEventArgs(1));
+						}
+						else
+						{
+							OnNavigationGestureEvent(new NavigationGestureEventArgs(c));
+						}
+					}
+					
 				}
+				else if (this.gestureSessionState == GestureSessionState.POINTING)
+				{
+					//Console.WriteLine("Pointing");
+				} 
+				else
+				{
+					//Console.WriteLine("Gesture None");
+				}
+				
 			}
 		}
 		
@@ -403,6 +459,22 @@ namespace libopenhgi
 			if (NavigationGestureEvent != null)
 			{
 				NavigationGestureEvent(this, e);
+			}
+		}
+		
+		protected virtual void OnNavigationSessionStartEvent(HGIUserEventArgs e)
+		{
+			if (NavigationSessionStartEvent != null)
+			{
+				NavigationSessionStartEvent(this, e);
+			}
+		}
+		
+		protected virtual void OnNavigationSessionEndEvent(HGIUserEventArgs e)
+		{
+			if (NavigationSessionEndEvent != null)
+			{
+				NavigationSessionEndEvent(this, e);
 			}
 		}
 		

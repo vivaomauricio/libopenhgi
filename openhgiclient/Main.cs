@@ -21,6 +21,13 @@ namespace openhgiclient
 			
 			this.openhgi.NavigationGestureEvent += 
 				new NavigationGestureEventHandler(this.navigationGesture);
+			
+			this.openhgi.NavigationSessionStartEvent += 
+				new NavigationSessionStartHandler(this.navigationSessionStart);
+			
+			this.openhgi.NavigationSessionEndEvent += 
+				new NavigationSessionEndHandler(this.navigationSessionEnd);
+			
 			this.openhgi.MessageEvent += new MessageEventHandler(this.printMessage);
 			
 			
@@ -34,27 +41,27 @@ namespace openhgiclient
 			Console.WriteLine(e.message);
 		}
 		
+		private void navigationSessionStart(object sender, HGIUserEventArgs e)
+		{
+			Console.WriteLine("Navigation Session started for user " + e.user);
+		}
+		
+		private void navigationSessionEnd(object sender, HGIUserEventArgs e)
+		{
+			Console.WriteLine("Navigation Session ended for user " + e.user);
+		}
+		
 		private void navigationGesture(object sender, NavigationGestureEventArgs e)
 		{
-			Console.Out.Write(".");
-			
-			if (e.coordinate.plane == MovementSpacePlane.BACKWARD)
+			if (e.coordinate.plane == MovementSpacePlane.POV 
+			    && e.coordinate.quadrant == MovementSpaceQuadrant.CENTER)
 			{
-				Console.WriteLine("Plane: Backward");
+				Console.WriteLine(".");
 			}
-			else if (e.coordinate.plane == MovementSpacePlane.POV)
+			else
 			{
-				Console.WriteLine("Plane: POV");
+				Console.WriteLine("\tplane: " + e.coordinate.plane + "\tquadrant: " + e.coordinate.quadrant);
 			}
-			else if (e.coordinate.plane == MovementSpacePlane.FORWARD)
-			{
-				Console.WriteLine("Plane: Forward");
-			}
-			else 
-			{
-				Console.Out.WriteLine("No plane at all");
-			}
-			
 		}
 		
 		

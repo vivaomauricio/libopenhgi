@@ -1,24 +1,20 @@
 using System;
+using System.Net;
+using System.Net.Sockets;
 
 
 namespace databusBroadcaster
 {
-	public class DataBusBroadcaster
+	public class DBusClient
 	{
-		public DataBusBroadcaster ()
+		
+		
+		public DBusClient (string IP, int port)
 		{
+			
 			
 		}
-		
-		public bool broadcastXMLMessage()
-		{
 			
-			
-			
-			
-			
-			return false;	
-		}		
 	}
 }
 

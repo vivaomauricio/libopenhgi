@@ -65,19 +65,10 @@ namespace libopenhgi
 			return new MovementSpacePoint3D((int) p.X, (int) p.Y, (int) p.Z);
 		}
 		
-		private bool didTheOriginMoved(MovementSpacePoint3D o)
-		{
-			
-			return false;
-		}
-		
 		private MovementSpacePlane calcPlane(MovementSpacePoint3D p)
 		{
-			int min = origin.Z - d;
-			int max = origin.Z + d;
-			
-			
-			Logger.Log.getInstance().toFile("calcPLANE", " minZ: " + min + "  maxZ: " + max + "   pointZ: " + p.Z);
+			int min = origin.Z - 2*d;
+			int max = origin.Z + 2*d;
 			
 			
 			if (p.Z < min) {
@@ -93,6 +84,61 @@ namespace libopenhgi
 		
 		private MovementSpaceQuadrant calcQuadrant(MovementSpacePoint3D p)
 		{
+			
+			int Ymin = origin.Y - d/4;
+			int Ymax = origin.Y + d/4;
+			
+			int Xmin = origin.X + d/2;
+			int Xmax = origin.X + d + d/2;
+			
+			
+			
+			if (p.X < Xmin)
+			{
+				if (p.Y < Ymin) 
+				{
+					return MovementSpaceQuadrant.DOWN;
+				}
+				else if (p.Y > Ymin && p.Y < Ymax)
+				{
+					return MovementSpaceQuadrant.LEFT;
+				}
+				else if (p.Y > Ymax)
+				{
+					return MovementSpaceQuadrant.UP;
+				}
+			}
+			else if (p.X > Xmin && p.X < Xmax)
+			{
+				if (p.Y < Ymin) 
+				{
+					return MovementSpaceQuadrant.DOWN;
+				}
+				else if (p.Y > Ymin && p.Y < Ymax)
+				{
+					return MovementSpaceQuadrant.CENTER;
+				}
+				else if (p.Y > Ymax)
+				{
+					return MovementSpaceQuadrant.UP;
+				}
+			}
+			else if (p.X > Xmax)
+			{
+				if (p.Y < Ymin) 
+				{
+					return MovementSpaceQuadrant.DOWN;
+				}
+				else if (p.Y > Ymin && p.Y < Ymax)
+				{
+					return MovementSpaceQuadrant.RIGHT;
+				}
+				else if (p.Y > Ymax)
+				{
+					return MovementSpaceQuadrant.UP;
+				}
+			}
+			
 			return MovementSpaceQuadrant.CENTER;
 		}
 		
@@ -101,16 +147,27 @@ namespace libopenhgi
 			MovementSpacePoint3D l = pointConv(LHand);
 			MovementSpacePoint3D r = pointConv(RHand);
 			
-			if (this.didTheOriginMoved(l))
+			MovementSpaceQuadrant originQuadrant = this.calcQuadrant(l);
+			if (originQuadrant != MovementSpaceQuadrant.LEFT)
 			{
-				return new MovementSpaceCoordinate(MovementSpacePlane.POV, MovementSpaceQuadrant.CENTER);	
+				Logger.Log.getInstance().DEBUG("NAV", "Navigation ended");
+				return null;
 			}
 			
 			MovementSpacePlane retPlane;
 			MovementSpaceQuadrant retQuadrant;
 			
 			retPlane = this.calcPlane(r);
-			retQuadrant = this.calcQuadrant(r);
+			
+			if (retPlane != MovementSpacePlane.POV)
+			{
+				retQuadrant = MovementSpaceQuadrant.CENTER;
+			}
+			else
+			{
+				retQuadrant = this.calcQuadrant(r);
+			}
+				
 			
 			return new MovementSpaceCoordinate(retPlane, retQuadrant);
 		}
