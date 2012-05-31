@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
+using System.Timers;
 using OpenNI;
 using NITE;
 using Logger;
@@ -99,7 +100,7 @@ namespace libopenhgi
 			try
 			{
 				this.log.INFO("libopenhgi", "loading config:" + this.configxml);
-				this.log.setLevelDebug(true);
+				//this.log.setLevelDebug(true);
 				
 				this.context = Context.CreateFromXmlFile(this.configxml, out this.scriptNode);
 				this.depth = this.context.FindExistingNode(NodeType.Depth) as DepthGenerator;
@@ -283,6 +284,11 @@ namespace libopenhgi
 			{
 				this.movementSpace = null;
 				this.lastGestureSessionState = GestureSessionState.POINTING;
+				
+				System.Timers.Timer t = new System.Timers.Timer();
+				t.Elapsed += new ElapsedEventHandler(OnTimer);
+				t.Interval = 5000;
+				t.Enabled = true;
 				
 			}
 			else {
@@ -474,6 +480,14 @@ namespace libopenhgi
 			if (PointingCoordinatesEvent != null)
 			{
 				PointingCoordinatesEvent(this, e);
+			}
+		}
+		
+		protected void OnTimer(Object sender, ElapsedEventArgs e)
+		{
+			if (this.state == State.STEADY)
+			{
+				//Console.WriteLine("CLICK?");
 			}
 		}
 		

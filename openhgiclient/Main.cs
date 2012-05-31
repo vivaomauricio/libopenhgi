@@ -66,11 +66,11 @@ namespace openhgiclient
 				
 				if (e.coordinate.plane == MovementSpacePlane.POV)
 				{
-					Console.WriteLine("[NAVIGATION]\t\t" + e.coordinate.quadrant);
+					Console.WriteLine("[NAVIGATION]\t\t\t" + e.coordinate.quadrant);
 				}
 				else
 				{
-					Console.WriteLine("[NAVIGATION]\t\t" + e.coordinate.plane);
+					Console.WriteLine("[NAVIGATION]\t\t\t" + e.coordinate.plane);
 				}
 			}
 		}
